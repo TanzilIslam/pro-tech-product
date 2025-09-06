@@ -19,6 +19,9 @@ export function AppImage({ src, alt = 'pro tech engineering', className }: AppIm
       fill
       className={className}
       onError={() => setImgSrc('/fallback.png')}
+      priority
+      unoptimized
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
     />
   )
 }
