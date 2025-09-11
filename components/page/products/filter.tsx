@@ -1,6 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
-import { useState, useEffect } from 'react'
+
+import { useState, useEffect, useCallback } from 'react'
 import {
   Select,
   SelectContent,
@@ -9,120 +9,120 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { getAllCategories } from '@/service/categories'
-import { Category, Brand } from '@/lib/types'
-import { getAllBrands } from '@/service/brands'
 import { Button } from '@/components/ui/button'
 import { RotateCcw } from 'lucide-react'
+import { getAllCategories } from '@/service/categories'
+import { getAllBrands } from '@/service/brands'
+import { Category, Brand } from '@/lib/types'
 
-export function Filter({
-  onFilterUpdate,
-}: {
-  onFilterUpdate: (filter: { categoryId?: string; brandId?: string; keywords?: string }) => void
-}) {
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
-  const [selectedBrand, setSelectedBrand] = useState<string | undefined>(undefined)
+type FilterState = {
+  categoryId?: string
+  brandId?: string
+  keywords?: string
+}
 
+export function Filter({ onFilterUpdate }: { onFilterUpdate: (filter: FilterState) => void }) {
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
+
+  const [selectedCategory, setSelectedCategory] = useState<'all' | string>('all')
+  const [selectedBrand, setSelectedBrand] = useState<'all' | string>('all')
   const [keywords, setKeywords] = useState('')
 
-  const fetchAllCategories = async () => {
-    const categories = await getAllCategories()
-    setCategories(categories || [])
-  }
-
-  const fetchAllBrands = async () => {
-    const brands = await getAllBrands()
-    setBrands(brands || [])
-  }
-
+  // Fetch categories and brands once
   useEffect(() => {
-    fetchAllCategories()
-    fetchAllBrands()
+    const fetchData = async () => {
+      const [categoriesRes, brandsRes] = await Promise.all([getAllCategories(), getAllBrands()])
+      setCategories(categoriesRes || [])
+      setBrands(brandsRes || [])
+    }
+    fetchData()
   }, [])
+
+  // Debounced keyword effect
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      onFilterUpdate({
+        categoryId: selectedCategory === 'all' ? undefined : selectedCategory,
+        brandId: selectedBrand === 'all' ? undefined : selectedBrand,
+        keywords: keywords.trim() || undefined,
+      })
+    }, 400)
+    return () => clearTimeout(timeout)
+  }, [selectedCategory, selectedBrand, keywords, onFilterUpdate])
+
+  const handleCategoryChange = useCallback(
+    (value: 'all' | string) => setSelectedCategory(value),
+    []
+  )
+  const handleBrandChange = useCallback((value: 'all' | string) => setSelectedBrand(value), [])
+  const handleKeywordsChange = useCallback((value: string) => setKeywords(value), [])
+  const handleReset = useCallback(() => {
+    setSelectedCategory('all')
+    setSelectedBrand('all')
+    setKeywords('')
+    onFilterUpdate({})
+  }, [onFilterUpdate])
 
   return (
     <div className="grid grid-cols-12 gap-4 items-center">
+      {/* Search */}
       <div className="col-span-5">
         <Input
           placeholder="Search products..."
           value={keywords}
-          onChange={(e) => {
-            setKeywords(e.target.value)
-            onFilterUpdate({ keywords: e.target.value })
-          }}
+          onChange={(e) => handleKeywordsChange(e.target.value)}
           className="!h-14"
         />
       </div>
+
+      {/* Filters */}
       <div className="col-span-7">
         <div className="grid grid-cols-12 gap-4 items-center">
+          {/* Category */}
           <div className="col-span-5">
-            <Select
-              value={selectedCategory}
-              onValueChange={(value) => {
-                setSelectedCategory(value)
-                onFilterUpdate({ categoryId: value })
-              }}
-            >
+            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
               <SelectTrigger className="w-full !h-14">
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent className="max-h-96 overflow-y-auto">
-                {categories.map((category) => (
-                  <SelectItem
-                    key={category.id}
-                    value={category.id}
-                    className="flex flex-wrap items-center gap-4 py-2"
-                  >
-                    <img
-                      src={category.image}
-                      alt={category.name}
-                      className="w-10 h-10 object-contain"
-                    />
-                    <p className="truncate">{category.name}</p>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id} className="flex items-center gap-2 py-2">
+                    <img src={cat.image} alt={cat.name} className="w-8 h-8 object-contain" />
+                    {cat.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
+          {/* Brand */}
           <div className="col-span-5">
-            <Select
-              value={selectedBrand}
-              onValueChange={(value) => {
-                setSelectedBrand(value)
-                onFilterUpdate({ brandId: value })
-              }}
-            >
+            <Select value={selectedBrand} onValueChange={handleBrandChange}>
               <SelectTrigger className="w-full !h-14">
                 <SelectValue placeholder="Select Brand" />
               </SelectTrigger>
               <SelectContent className="max-h-96 overflow-y-auto">
+                <SelectItem value="all">All Brands</SelectItem>
                 {brands.map((brand) => (
                   <SelectItem
                     key={brand.id}
                     value={brand.id}
-                    className="py-2 flex items-center gap-2"
+                    className="flex items-center gap-2 py-2"
                   >
-                    <img src={brand.image} alt={brand.name} className="w-10 h-10 object-contain" />
-                    <span className="truncate whitespace-nowrap">{brand.name}</span>
+                    <img src={brand.image} alt={brand.name} className="w-8 h-8 object-contain" />
+                    {brand.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <Button
-            variant="outline"
-            className="col-span-2 w-full h-14"
-            onClick={() => {
-              setSelectedCategory(undefined)
-              setSelectedBrand(undefined)
-              setKeywords('')
-              onFilterUpdate({})
-            }}
-          >
+
+          {/* Reset */}
+          <Button variant="outline" className="col-span-2 w-full h-14" onClick={handleReset}>
             <RotateCcw className="h-4 w-4" />
-            Reset Filters
+            Reset
           </Button>
         </div>
       </div>

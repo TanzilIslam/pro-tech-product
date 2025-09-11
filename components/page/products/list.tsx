@@ -43,6 +43,7 @@ export function ProductsList({ initialProducts }: ProductsListProps) {
   return (
     <div className="space-y-10">
       <Filter onFilterUpdate={handleFilterUpdate} />
+      {filteredProducts.length === 0 && <p className="text-center text-xl font-semibold">No products found</p>}
       {filteredProducts.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}

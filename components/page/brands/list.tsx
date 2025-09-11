@@ -7,14 +7,14 @@ export default async function BrandsList() {
   const brands = await getAllBrands()
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
       {brands.map((brand) => (
         <Card key={brand.id} className="flex flex-col overflow-hidden pt-0">
-          <div className="relative h-48 w-full">
+          <div className="relative w-full h-[150px] flex items-center justify-center overflow-hidden rounded-t-lg">
             <AppImage
               src={brand.image}
               alt={brand.name}
-              className="object-cover border-b rounded-t-lg rounded-b-none hover:scale-105 transition-transform ease-in-out duration-300"
+              className="max-w-full max-h-full object-contain transition-transform duration-300 ease-in-out hover:scale-105"
             />
           </div>
           <CardContent className="flex-1">

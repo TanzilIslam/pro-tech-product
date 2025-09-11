@@ -37,4 +37,15 @@ export type Product = {
   specifications: Specification[]
   pro_tech_products_brands: ProductBrandRelation[]
   category?: Category
+  slug: string
+}
+
+export interface ContactFormData {
+  customer_name: string
+  company_name?: string // Optional field
+  email_address: string
+  phone_number?: string // Optional field
+  product_id: string // Assuming UUID
+  product_name: string
+  message: string // We need a message field
 }
